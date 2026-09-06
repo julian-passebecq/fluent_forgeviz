@@ -14,6 +14,16 @@ The reusable paths `src/core`, `src/renderers`, `src/adapters`, and `src/index.t
 
 **The consumer has not been changed.** The deployed `Fluent2_J_Viz` website still embeds its verified V1.2 copy. Rewiring that consumer to this repository will be a separate change later.
 
+## Project tracking
+
+ForgeViz keeps repository-level maintenance evidence in three files:
+
+- [`BACKLOG.md`](./BACKLOG.md) — prioritized work, acceptance criteria, deferred items and explicit non-goals;
+- [`FEATURE_MATRIX.md`](./FEATURE_MATRIX.md) — implemented features and their actual verification strength;
+- [`PASS_LOG.md`](./PASS_LOG.md) — append-only development/maintenance passes with date, model, commits, scope, gates and result.
+
+Every future AI development or maintenance pass should update the backlog/matrix as needed and append one pass record to `PASS_LOG.md`. Do not upgrade a feature from compile-verified to runtime/visual/release-verified without the corresponding evidence.
+
 ## Boundary
 
 ForgeViz owns:
