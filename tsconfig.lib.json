@@ -11,5 +11,6 @@
     "declarationMap": true,
     "sourceMap": true
   },
-  "include": ["src/index.ts", "src/core", "src/renderers", "src/adapters"]
+  "include": ["src/index.ts", "src/core", "src/renderers", "src/adapters"],
+  "exclude": ["tests"]
 }
