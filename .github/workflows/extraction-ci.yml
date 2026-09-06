@@ -95,7 +95,8 @@ jobs:
               "typescript": "7.0.2",
               "vitest": "3.2.7"
             },
-            "packageManager": "pnpm@11.19.0"
+            "packageManager": "pnpm@11.19.0",
+            "pnpm": {"onlyBuiltDependencies": ["esbuild"]}
           }
           JSON
 
