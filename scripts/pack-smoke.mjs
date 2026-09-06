@@ -1,12 +1,12 @@
 import { execFileSync } from 'node:child_process';
-import { existsSync, mkdtempSync, readFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 const out = mkdtempSync(join(tmpdir(), 'vizforge-pack-'));
-const packed = execFileSync('pnpm', ['pack', '--pack-destination', out], { encoding: 'utf8' });
-const match = packed.match(/([^\s]+\.tgz)/g);
-if (!match?.length) throw new Error(`pnpm pack did not report a tarball: ${packed}`);
-const tarball = match.at(-1);
+execFileSync('pnpm', ['pack', '--pack-destination', out], { stdio: 'pipe' });
+const file = readdirSync(out).find((name) => name.endsWith('.tgz'));
+if (!file) throw new Error('pnpm pack did not create a tarball');
+const tarball = join(out, file);
 const listing = execFileSync('tar', ['-tzf', tarball], { encoding: 'utf8' });
 for (const required of [
   'package/dist/index.js',
