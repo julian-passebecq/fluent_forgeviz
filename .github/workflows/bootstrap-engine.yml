@@ -1,0 +1,209 @@
+name: Bootstrap ForgeViz engine
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/bootstrap-engine.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  migrate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout target repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.19.0'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: '11.19.0'
+          run_install: false
+
+      - name: Copy pinned engine source from consumer
+        shell: bash
+        run: |
+          set -euo pipefail
+          SOURCE_COMMIT='7aaa8fa601c5fa2c9f8acfd7a4d4eb54b887b9ef'
+          git clone --filter=blob:none --no-checkout https://github.com/julian-passebecq/Fluent2_J_Viz.git /tmp/viz-source
+          git -C /tmp/viz-source checkout "$SOURCE_COMMIT" -- \
+            src/core src/renderers src/adapters src/examples src/index.ts \
+            tests/unit/boundaries.test.ts tests/unit/extensions.test.ts \
+            tests/unit/player.test.ts tests/unit/renderers.test.ts tests/unit/spec.test.ts \
+            VIZFORGE_ARCHITECTURE.md VIZFORGE_SPEC_REFERENCE.md VIZFORGE_VISUAL_CATALOG.md \
+            .prettierrc.json .prettierignore .node-version
+          rm -rf src tests
+          mkdir -p src tests/unit
+          cp -R /tmp/viz-source/src/core src/core
+          cp -R /tmp/viz-source/src/renderers src/renderers
+          cp -R /tmp/viz-source/src/adapters src/adapters
+          cp -R /tmp/viz-source/src/examples src/examples
+          cp /tmp/viz-source/src/index.ts src/index.ts
+          cp /tmp/viz-source/tests/unit/{boundaries,extensions,player,renderers,spec}.test.ts tests/unit/
+          cp /tmp/viz-source/VIZFORGE_{ARCHITECTURE,SPEC_REFERENCE,VISUAL_CATALOG}.md .
+          cp /tmp/viz-source/.prettierrc.json /tmp/viz-source/.prettierignore /tmp/viz-source/.node-version .
+          printf '%s\n' "$SOURCE_COMMIT" > SOURCE_COMMIT
+
+      - name: Write standalone package configuration
+        shell: bash
+        run: |
+          cat > package.json <<'JSON'
+          {
+            "name": "@vizforge/engine",
+            "version": "1.2.0",
+            "private": true,
+            "type": "module",
+            "description": "Framework-independent semantic D3 analytical figures and deterministic editorial stories",
+            "exports": {
+              ".": {
+                "types": "./dist/index.d.ts",
+                "import": "./dist/index.js"
+              },
+              "./react": {
+                "types": "./dist/adapters/react.d.ts",
+                "import": "./dist/adapters/react.js"
+              }
+            },
+            "files": ["dist"],
+            "scripts": {
+              "typecheck": "tsc --noEmit",
+              "test": "vitest run",
+              "build": "tsc -p tsconfig.lib.json",
+              "check": "pnpm typecheck && pnpm test && pnpm build"
+            },
+            "engines": {"node": ">=22.13.0"},
+            "dependencies": {
+              "d3": "7.9.0",
+              "d3-sankey": "0.12.3",
+              "zod": "3.24.2"
+            },
+            "peerDependencies": {
+              "react": ">=18.3 <20",
+              "react-dom": ">=18.3 <20"
+            },
+            "peerDependenciesMeta": {
+              "react": {"optional": true},
+              "react-dom": {"optional": true}
+            },
+            "devDependencies": {
+              "@types/d3": "7.4.3",
+              "@types/d3-sankey": "0.12.4",
+              "@types/node": "22.13.10",
+              "@types/react": "19.2.18",
+              "@types/react-dom": "19.2.7",
+              "jsdom": "26.0.0",
+              "react": "19.2.8",
+              "react-dom": "19.2.8",
+              "typescript": "7.0.2",
+              "vitest": "3.2.7"
+            },
+            "packageManager": "pnpm@11.19.0"
+          }
+          JSON
+
+          cat > tsconfig.json <<'JSON'
+          {
+            "compilerOptions": {
+              "target": "ES2022",
+              "lib": ["ES2022", "DOM", "DOM.Iterable"],
+              "module": "ESNext",
+              "moduleResolution": "Bundler",
+              "jsx": "react-jsx",
+              "strict": true,
+              "esModuleInterop": true,
+              "skipLibCheck": true,
+              "resolveJsonModule": true,
+              "allowImportingTsExtensions": true,
+              "noEmit": true,
+              "types": ["node"]
+            },
+            "include": ["src", "tests", "vitest.config.ts"]
+          }
+          JSON
+
+          cat > tsconfig.lib.json <<'JSON'
+          {
+            "extends": "./tsconfig.json",
+            "compilerOptions": {
+              "noUnusedLocals": true,
+              "noUnusedParameters": true,
+              "noEmit": false,
+              "allowImportingTsExtensions": false,
+              "outDir": "dist",
+              "rootDir": "src",
+              "declaration": true,
+              "declarationMap": true,
+              "sourceMap": true
+            },
+            "include": ["src/index.ts", "src/core", "src/renderers", "src/adapters"],
+            "exclude": ["tests", "src/examples"]
+          }
+          JSON
+
+          cat > vitest.config.ts <<'TS'
+          import { defineConfig } from 'vitest/config';
+          export default defineConfig({
+            test: {
+              environment: 'jsdom',
+              include: ['tests/unit/**/*.test.ts'],
+              restoreMocks: true
+            }
+          });
+          TS
+
+          cat > .gitignore <<'EOF'
+          node_modules/
+          dist/
+          coverage/
+          .DS_Store
+          EOF
+
+      - name: Install, test and build standalone engine
+        run: |
+          pnpm install --no-frozen-lockfile
+          pnpm check
+
+      - name: Record extraction boundary
+        shell: bash
+        run: |
+          cat > EXTRACTION_REPORT.md <<'EOF'
+          # ForgeViz extraction report
+
+          This repository was extracted from the known-good `Fluent2_J_Viz` V1.2 consumer baseline.
+
+          The extraction intentionally copies only reusable engine-owned code:
+
+          - `src/core`
+          - `src/renderers`
+          - `src/adapters`
+          - `src/index.ts`
+          - engine examples used by tests/documentation
+          - engine-focused unit tests
+
+          It deliberately excludes the Datapass/Fluent Studio application, Netlify website configuration, browser-consumer integration tests, and Datapass vendoring/bootstrap logic.
+
+          No renderer or semantic behavior was redesigned during extraction.
+          EOF
+
+      - name: Commit verified engine extraction
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src tests package.json pnpm-lock.yaml tsconfig.json tsconfig.lib.json vitest.config.ts \
+            .gitignore .node-version .prettierrc.json .prettierignore SOURCE_COMMIT \
+            VIZFORGE_ARCHITECTURE.md VIZFORGE_SPEC_REFERENCE.md VIZFORGE_VISUAL_CATALOG.md EXTRACTION_REPORT.md
+          git commit -m 'chore: extract verified ForgeViz engine from consumer'
+          git push origin HEAD:main
