@@ -1,0 +1,47 @@
+{
+  "name": "@vizforge/engine",
+  "version": "1.2.0",
+  "private": true,
+  "type": "module",
+  "description": "Framework-independent semantic D3 analytical figures and deterministic editorial stories",
+  "exports": {
+    ".": {"types": "./dist/index.d.ts", "import": "./dist/index.js"},
+    "./react": {"types": "./dist/adapters/react.d.ts", "import": "./dist/adapters/react.js"}
+  },
+  "files": ["dist", "README.md", "SOURCE_COMMIT"],
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "build": "tsc -p tsconfig.lib.json",
+    "check": "pnpm typecheck && pnpm test && pnpm build && pnpm pack:smoke",
+    "pack:smoke": "node scripts/pack-smoke.mjs"
+  },
+  "engines": {"node": ">=22.13.0"},
+  "dependencies": {
+    "d3": "7.9.0",
+    "d3-sankey": "0.12.3",
+    "zod": "3.24.2"
+  },
+  "peerDependencies": {
+    "react": ">=18.3 <20",
+    "react-dom": ">=18.3 <20"
+  },
+  "peerDependenciesMeta": {
+    "react": {"optional": true},
+    "react-dom": {"optional": true}
+  },
+  "devDependencies": {
+    "@types/d3": "7.4.3",
+    "@types/d3-sankey": "0.12.4",
+    "@types/node": "22.13.10",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.7",
+    "jsdom": "26.0.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "typescript": "7.0.2",
+    "vitest": "3.2.7"
+  },
+  "packageManager": "pnpm@11.19.0",
+  "pnpm": {"onlyBuiltDependencies": ["esbuild"]}
+}
