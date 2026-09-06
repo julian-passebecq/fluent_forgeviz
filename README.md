@@ -2,7 +2,7 @@
 
 Standalone home for the reusable ForgeViz visualization engine extracted from `julian-passebecq/Fluent2_J_Viz`.
 
-> **Migration status:** this branch is an incomplete extraction checkpoint, not a consumable package. The verified runtime source of truth remains `julian-passebecq/Fluent2_J_Viz` at `7aaa8fa601c5fa2c9f8acfd7a4d4eb54b887b9ef` until the standalone install/typecheck/test/build gate and consumer rewire both pass.
+> **Migration status:** extraction is in progress. Until the standalone engine has completed its own install/typecheck/test/build gate and the consumer has been rewired successfully, the verified runtime source of truth remains `julian-passebecq/Fluent2_J_Viz` at the pinned source commit recorded on the extraction branch. Do not treat this repository's `main` branch as a consumable engine package yet.
 
 The public website/demo remains an independent consumer in `julian-passebecq/Fluent2_J_Viz`.
 
@@ -26,8 +26,6 @@ ForgeViz will **not** own:
 - ConceptMotion technical/algorithm renderers;
 - Power BI packaging (future adapter only).
 
-## Extraction checkpoint
+## Current extraction work
 
-This branch currently contains only the standalone package/configuration skeleton and the byte-identical `src/core` tree from the pinned V1.2 consumer. Renderers, adapters, the package root entry point, tests and lockfile are not migrated yet. Because `package.json` describes the intended final engine exports, those exports are not valid at this intermediate checkpoint. **Do not merge, publish, pack, or wire a consumer to this branch yet.**
-
-Next safe step: copy the renderer and adapter layer without redesign, restore the original root export, add the engine-focused tests and lockfile, then run the standalone gate. Only after that should the consumer be changed.
+The active migration branch is `extract-v1.2-engine`. The extraction is intentionally conservative: copy the existing working engine without redesigning it, preserve byte-identical engine source where possible, add standalone package/test infrastructure, prove it green, then switch the consumer to an exact ForgeViz commit. Only after that proof will duplicated engine source be removed from the consumer repository.
